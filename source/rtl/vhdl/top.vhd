@@ -126,6 +126,8 @@ architecture rtl of top is
   
   constant GRAPH_MEM_ADDR_WIDTH : natural := MEM_ADDR_WIDTH + 6;-- graphics addres is scales with minumum char size 8*8 log2(64) = 6
   
+  signal rgb: std_logic_vector(23 downto 0);
+  
   -- text
   signal message_lenght      : std_logic_vector(MEM_ADDR_WIDTH-1 downto 0);
   signal graphics_lenght     : std_logic_vector(GRAPH_MEM_ADDR_WIDTH-1 downto 0);
@@ -168,7 +170,7 @@ begin
   graphics_lenght <= conv_std_logic_vector(MEM_SIZE*8*8, GRAPH_MEM_ADDR_WIDTH);
   
   -- removed to inputs pin
-  direct_mode <= '1';
+  direct_mode <= '0';
   display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
@@ -250,11 +252,44 @@ begin
   --dir_red
   --dir_green
   --dir_blue
+  process(dir_pixel_column) begin
+  if(dir_pixel_column <=80) then
+		rgb <= x"FFFFFF";
+	elsif(dir_pixel_column> 80 and dir_pixel_column <=160) then
+		rgb <= x"00FFFF";
+	elsif(dir_pixel_column>160 and dir_pixel_column<=240) then
+		rgb <= x"FFFF00";
+	elsif(dir_pixel_column>240 and dir_pixel_column<=320) then
+		rgb <= x"00FF00";
+	elsif(dir_pixel_column>320 and dir_pixel_column<=400) then
+		rgb <= x"FF00FF";
+	elsif(dir_pixel_column>400 and dir_pixel_column<=480) then
+		rgb <= x"0000FF";
+	elsif(dir_pixel_column>480 and dir_pixel_column<=560) then
+		rgb <= x"FF0000";
+	else
+		rgb <= x"000000";
+	end if;
+end process;
+  
+  
+  dir_red <= rgb(7 downto 0);
+  dir_green <= rgb(15 downto 8);
+  dir_blue <= rgb(23 downto 16);
+  
  
   -- koristeci signale realizovati logiku koja pise po TXT_MEM
   --char_address
   --char_value
   --char_we
+  
+  process(char_address, char_value) begin
+  if (char_address <= "00100010110000") then
+			char_value <= "000001";
+			end if;
+			end process;
+  
+  
   
   -- koristeci signale realizovati logiku koja pise po GRAPH_MEM
   --pixel_address
