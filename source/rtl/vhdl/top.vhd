@@ -171,7 +171,7 @@ begin
   
   -- removed to inputs pin
   direct_mode <= '0';
-  display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -283,13 +283,25 @@ end process;
   --char_value
   --char_we
   
-  process(char_address, char_value) begin
-  if (char_address <= "00100010110000") then
-			char_value <= "000001";
-			end if;
-			end process;
-  
-  
+ char_we <= '1';
+process (pix_clock_s,vga_rst_n_s) begin
+if(vga_rst_n_s = '1') then
+	char_address <= (others => '0');
+elsif(pix_clock_s'event and pix_clock_s = '1') then   
+  if (char_address = "00010010110000") then 
+     char_address <= (others => '0');
+ else
+   char_address <= char_address + 1;
+		end if;
+	end if;
+end process;
+
+	char_value <= "001011" when char_address = "00000000001101" else
+	               "000001" when char_address = "00000000001110" else 
+                  "000110" when char_address = "00000000001111" else
+                  "000001" when char_address = "00000000010000" else
+						"100000";
+   
   
   -- koristeci signale realizovati logiku koja pise po GRAPH_MEM
   --pixel_address
