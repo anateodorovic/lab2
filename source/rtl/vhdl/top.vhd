@@ -14,6 +14,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+
+
 entity top is
   generic (
     RES_TYPE             : natural := 1;
@@ -23,6 +25,8 @@ entity top is
   port (
     clk_i          : in  std_logic;
     reset_n_i      : in  std_logic;
+	 direct_mode_i  : in std_logic;
+	 display_mode_i : in std_logic_vector(1 downto 0);
     -- vga
     vga_hsync_o    : out std_logic;
     vga_vsync_o    : out std_logic;
@@ -158,6 +162,7 @@ architecture rtl of top is
   signal dir_blue            : std_logic_vector(7 downto 0);
   signal dir_pixel_column    : std_logic_vector(10 downto 0);
   signal dir_pixel_row       : std_logic_vector(10 downto 0);
+  
 
 begin
 
@@ -171,7 +176,7 @@ begin
   
   -- removed to inputs pin
   direct_mode <= '0';
-  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  display_mode     <= "11";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -213,14 +218,14 @@ begin
     clk_i              => clk_i,
     reset_n_i          => reset_n_i,
     --
-    direct_mode_i      => direct_mode,
+    direct_mode_i      => direct_mode_i,
     dir_red_i          => dir_red,
     dir_green_i        => dir_green,
     dir_blue_i         => dir_blue,
     dir_pixel_column_o => dir_pixel_column,
     dir_pixel_row_o    => dir_pixel_row,
     -- cfg
-    display_mode_i     => display_mode,  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+    display_mode_i     => display_mode_i,  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
     -- text mode interface
     text_addr_i        => char_address,
     text_data_i        => char_value,
@@ -288,7 +293,7 @@ process (pix_clock_s,vga_rst_n_s) begin
 if(vga_rst_n_s = '1') then
 	char_address <= (others => '0');
 elsif(pix_clock_s'event and pix_clock_s = '1') then   
-  if (char_address = "00010010110000") then 
+  if (char_address = "00010010111000") then 
      char_address <= (others => '0');
  else
    char_address <= char_address + 1;
@@ -296,10 +301,10 @@ elsif(pix_clock_s'event and pix_clock_s = '1') then
 	end if;
 end process;
 
-	char_value <= "001011" when char_address = "00000000001101" else
-	               "000001" when char_address = "00000000001110" else 
-                  "000110" when char_address = "00000000001111" else
-                  "000001" when char_address = "00000000010000" else
+	char_value <= "001011" when char_address = "00000100000000"  else
+	               "000001" when char_address = "00000100000001" else 
+                  "000110" when char_address = "00000100000010"  else
+                  "000001" when char_address = "00000100000011"  else
 						"100000";
    
   
@@ -308,5 +313,25 @@ end process;
   --pixel_value
   --pixel_we
   
+  
+  pixel_we <= '1';
+  
+  process (pix_clock_s) begin
+
+if(pix_clock_s'event and pix_clock_s = '1') then   
+  if (pixel_address = "0000000000000000010010110010100") then 
+     pixel_address <= (others => '0');
+ else
+   pixel_address <= pixel_address + 1;
+		end if;
+	end if;
+end process;
+
+pixel_value <= "11111111111111111111111111111111" when pixel_address>"0000000000000000000100100" and pixel_address<"000000000000000000010100" else
+					"00000000000000000000000000000000";
+					
+					
+					
+					
   
 end rtl;
